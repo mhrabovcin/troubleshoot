@@ -22,6 +22,7 @@ import (
 	"k8s.io/utils/pointer"
 
 	troubleshootv1beta2 "github.com/replicatedhq/troubleshoot/pkg/apis/troubleshoot/v1beta2"
+	"github.com/replicatedhq/troubleshoot/pkg/k8sutil"
 	"github.com/replicatedhq/troubleshoot/pkg/logger"
 )
 
@@ -83,9 +84,16 @@ func (c *CollectExecCopyFromHost) Collect(progressChan chan<- interface{}) (Coll
 		"troubleshoot.sh/collector":           "execcopyfromhost",
 		"troubleshoot.sh/execcopyfromhost-id": ksuid.New().String(),
 	}
+	namespace := c.Namespace
+	if namespace == "" && c.Namespace == "" {
+		kubeconfig := k8sutil.GetKubeconfig()
+		namespace, _, _ = kubeconfig.Namespace()
+	} else if namespace == "" {
+		namespace = c.Namespace
+	}
 
 	_, cleanup, err := execCopyFromHostCreateDaemonSet(
-		c.Context, c.Client, c.Collector, c.Namespace, "troubleshoot-execcopyfromhost-", labels,
+		c.Context, c.Client, c.Collector, namespace, "troubleshoot-execcopyfromhost-", labels,
 	)
 	defer cleanup()
 	if err != nil {
@@ -116,7 +124,7 @@ func (c *CollectExecCopyFromHost) Collect(progressChan chan<- interface{}) (Coll
 		}
 		b, err := c.execCopyFromHostGetFilesFromPods(
 			childCtx, c.ClientConfig, c.Client, c.Collector,
-			outputPath, labels, c.Namespace,
+			outputPath, labels, namespace,
 		)
 		if err != nil {
 			errCh <- err
