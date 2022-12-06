@@ -84,7 +84,7 @@ func (c *CollectExecCopyFromHost) Collect(progressChan chan<- interface{}) (Coll
 		"troubleshoot.sh/collector":           "execcopyfromhost",
 		"troubleshoot.sh/execcopyfromhost-id": ksuid.New().String(),
 	}
-	namespace := c.Namespace
+	namespace := c.Collector.Namespace
 	if namespace == "" && c.Namespace == "" {
 		kubeconfig := k8sutil.GetKubeconfig()
 		namespace, _, _ = kubeconfig.Namespace()
