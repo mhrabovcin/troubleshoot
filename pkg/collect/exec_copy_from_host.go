@@ -84,12 +84,17 @@ func (c *CollectExecCopyFromHost) Collect(progressChan chan<- interface{}) (Coll
 		"troubleshoot.sh/collector":           "execcopyfromhost",
 		"troubleshoot.sh/execcopyfromhost-id": ksuid.New().String(),
 	}
+	// here we use the namespace in the bundle configurations, if any is provided,
+	// this is to avoid having to verify pods, potentially failing, when namespaces
+	// are labeled, or a cluster-wide defualt is set, to enforce a podSecurity admission mode
+	// other than privileged
 	namespace := c.Collector.Namespace
-	if namespace == "" && c.Namespace == "" {
+	if namespace == "" {
+		namespace = c.Namespace
+	}
+	if namespace == "" {
 		kubeconfig := k8sutil.GetKubeconfig()
 		namespace, _, _ = kubeconfig.Namespace()
-	} else if namespace == "" {
-		namespace = c.Namespace
 	}
 
 	_, cleanup, err := execCopyFromHostCreateDaemonSet(
